@@ -16,7 +16,6 @@ import {
   Container,
   Form
 } from './styles';
-import { StackNavigationProp } from '@react-navigation/stack';
 
 interface FormData {
   service_name: string;
@@ -30,15 +29,8 @@ const schema = Yup.object().shape({
   password: Yup.string().required('Senha é obrigatória!'),
 })
 
-type RootStackParamList = {
-  Home: undefined;
-  RegisterLoginData: undefined;
-};
-
-type NavigationProps = StackNavigationProp<RootStackParamList, 'RegisterLoginData'>;
-
 export function RegisterLoginData() {
-  const { navigate } = useNavigation<NavigationProps>()
+  const { navigate } = useNavigation();
   const {
     control,
     handleSubmit,
@@ -56,8 +48,16 @@ export function RegisterLoginData() {
     }
 
     const dataKey = '@savepass:logins';
+    const oldData = await AsyncStorage.getItem(dataKey);
+    const newData = JSON.parse(oldData);
 
-    // Save data on AsyncStorage and navigate to 'Home' screen
+    if (newData) {
+      newData.push(newLoginData)
+      await AsyncStorage.setItem(dataKey, JSON.stringify(newData));
+    } else {
+      await AsyncStorage.setItem(dataKey, JSON.stringify(newLoginData));
+    }
+    navigate('Home')
   }
 
   return (
@@ -73,22 +73,16 @@ export function RegisterLoginData() {
             testID="service-name-input"
             title="Nome do serviço"
             name="service_name"
-            error={
-              // Replace here with real content
-              'Has error ? show error message'
-            }
+            error={errors.service_name?.message}
             control={control}
             autoCapitalize="sentences"
             autoCorrect
           />
           <Input
             testID="email-input"
-            title="E-mail ou usuário"
+            title="E-mail"
             name="email"
-            error={
-              // Replace here with real content
-              'Has error ? show error message'
-            }
+            error={errors.email?.message}
             control={control}
             autoCorrect={false}
             autoCapitalize="none"
@@ -98,10 +92,7 @@ export function RegisterLoginData() {
             testID="password-input"
             title="Senha"
             name="password"
-            error={
-              // Replace here with real content
-              'Has error ? show error message'
-            }
+            error={errors.password?.message}
             control={control}
             secureTextEntry
           />
